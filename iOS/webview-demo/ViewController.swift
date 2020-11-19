@@ -14,7 +14,11 @@ class ViewController: UIViewController, WKScriptMessageHandler, WKUIDelegate, WK
     @IBOutlet weak var textField:UITextField?
     
     let url = "https://tmh.red:8089"
-        
+    
+    struct LogMessage : Decodable {
+        let message: String?
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -22,65 +26,102 @@ class ViewController: UIViewController, WKScriptMessageHandler, WKUIDelegate, WK
         webView.navigationDelegate = self
         
         let contentController = webView.configuration.userContentController
-        contentController.add(self, name: "share")
+        contentController.add(self, name: "jsOnShare")
+        contentController.add(self, name: "jsOnBackPressed")
         contentController.add(self, name: "jsHandler")
+        contentController.add(self, name: "jsLog")
 
         let request = URLRequest(url : URL(string: url)!)
-        webView.load(request)
+        self.webView.load(request)
     }
 
     @IBAction func onButtonTap() {
+        _log(message: "Buttont tap")
+        
         let msg = textField?.text ?? ""
-        let jsCode = "debug('from app: " + msg + " ')"
-        webView.evaluateJavaScript(jsCode, completionHandler: nil)
+        let jsCode = "document.getElementById('fromNativeAppText').innerHTML = (+new Date()) + 'from app: " + msg + "'"
+        self.webView.evaluateJavaScript(jsCode, completionHandler: nil)
     }
     
     @IBAction func onButtonReload() {
-        webView.reload()
+        _log(message: "Reloading")
+        self.webView.reload()
     }
     
+    func _log(message: String) {
+        self.webView.evaluateJavaScript("debug('" + message + "')", completionHandler: nil)
+        print(message)
+    }
+
+
     func share (title: String?, text: String?, url: String?) {
-        print(title!)
-        print(text!)
-        print(url!)
-    
+        _log(message: "Sharing")
+        
         let textToShare = [ text ]
         let ac = UIActivityViewController(activityItems: textToShare as [Any], applicationActivities: nil)
-        //ac.popoverPresentationController?.sourceView = self.view
         present(ac, animated: true, completion: goToPostShare)
     }
     
     func goToPostShare() {
-        webView.evaluateJavaScript("debug('triggered func goToPostShare()')", completionHandler: nil)
+        let message = "debug('triggered func goToPostShare()')";
+        self.webView.evaluateJavaScript(message, completionHandler: nil)
+
+        _log(message: message);
     }
     
-    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-        print(message.name)
-        if message.name == "share" {
-            js_share(message: message)
-        } else if message.name == "jsHandler" {
-            js_jsHandler(message: message);
+    
+    func userContentController(_ userContentController: WKUserContentController, didReceive json: WKScriptMessage) {
+        let _msg = "userContentController: " + json.name
+        _log(message: _msg)
+        
+        if json.name == "jsOnShare" {
+            self.jsOnShare(json: json)
+        } else if json.name == "jsOnBackPressed" {
+            self.jsOnBackPressed(json: json)
+        } else if json.name == "jsHandler" {
+            self.jsHandler(json: json);
+        } else if json.name == "jsLog" {
+            self.jsLog(json: json);
         }
     }
     
-    func js_jsHandler(message: WKScriptMessage) {
-        textLabel?.text = message.body as? String
-    }
-    
-    func js_share(message: WKScriptMessage) {
+    func jsOnShare(json: WKScriptMessage) {
+        print("hi");
         struct Share : Decodable {
             let title: String?
             let text: String?
             let url: String?
         }
         
-        let oMessage = message.body as? String ?? ""
+        let oMessage = json.body as? String ?? ""
         let data = oMessage.data(using: .utf8)!
         let oShare: Share = try! JSONDecoder().decode(Share.self, from: data)
-
-        print(oShare.url)
         
-        share(title: oShare.title, text: oShare.text, url: oShare.url)
+        self.share(title: oShare.title, text: oShare.text, url: oShare.url)
+
+        _log(message: "called jsOnShare()")
+    }
+    
+    func jsOnBackPressed(json: WKScriptMessage) {
+        _log(message: "called jsOnBackPressed()")
+    }
+    
+    func jsHandler(json: WKScriptMessage) {
+        let oMessage = json.body as? String ?? ""
+        let data = oMessage.data(using: .utf8)!
+        let oLogMessage: LogMessage = try! JSONDecoder().decode(LogMessage.self, from: data);
+
+        self.textLabel?.text = oLogMessage.message
+
+        _log(message: "called jsHandler()")
+    }
+
+    func jsLog(json: WKScriptMessage) {
+        let oMessage = json.body as? String ?? ""
+        let data = oMessage.data(using: .utf8)!
+        let oLogMessage: LogMessage = try! JSONDecoder().decode(LogMessage.self, from: data);
+        
+        _log(message: "called jsLog(): " + (oLogMessage.message ?? ""))
     }
 }
 

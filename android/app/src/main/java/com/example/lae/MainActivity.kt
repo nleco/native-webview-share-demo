@@ -31,49 +31,70 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun sendMessage(view: View) {
+        val webView = findViewById<WebView>(R.id.webView);
         val editText = findViewById<EditText>(R.id.editText)
         val message = editText.text.toString()
-
-        val webView = findViewById<WebView>(R.id.webView)
-        webView.loadUrl("""javascript:(function f() {
-            |debug("$message")
-            |})()""".trimMargin())
-        Log.d("send to wb", message)
+        webView.loadUrl("javascript:(function() { document.getElementById('fromNativeAppText').innerHTML = (+new Date()) + ' " + message + "'; })()".trimMargin())
+        webView.loadUrl("""javascript:(function f() { debug("$message") })()""".trimMargin())
+        _log(message)
     }
 
     fun reloadView(view: View) {
         val webView = findViewById<WebView>(R.id.webView)
+        val message = "weView Reloaded"
         webView.reload()
+        _log("webView reloaded")
+    }
+
+    fun _log(message: String) {
+        showToast(message)
+        Log.d("webView", message);
+    }
+
+    fun showToast(text: String) {
+        val toast = Toast.makeText(applicationContext, text, Toast.LENGTH_SHORT)
+        toast.show();
     }
 
     private inner class JavascriptInterface {
+
+
         @android.webkit.JavascriptInterface
-        fun showToast(text: String) {
-            val appTextView = findViewById<TextView>(R.id.appTextView)
-            appTextView.setText(text)
+        fun jsOnShare(json: String) {
+            val params = JSONObject(json);
+            val intent = Intent()
+            val text = params.getString("text");
+            val url = params.getString("url");
 
-            val toast = Toast.makeText(applicationContext, "This was sent to the app", Toast.LENGTH_SHORT)
-            toast.setGravity(Gravity.CENTER_VERTICAL, 0, 0);
-            toast.show();
+            val message = text  + "\n" + url;
 
-            Log.d("WEBVIEW", text.toString());
+            intent.action = Intent.ACTION_SEND
+            intent.type="text/plain"
+            if (!params.isNull("title")) {
+                val title = params.optString("title", )
+                if (title.isNotEmpty()) {
+                    intent.putExtra(Intent.EXTRA_TITLE, title )
+                }
+            }
+            intent.putExtra(Intent.EXTRA_TEXT, message)
+            startActivity(Intent.createChooser(intent,"Share To:"))
+            _log(message)
         }
 
         @android.webkit.JavascriptInterface
-        fun share(title: String?, text: String?, url: String?) {
-            val txt = text.toString() + "\n" + url.toString()
+        fun jsOnBackPressed(json: String) {
+            val message = "jsOnBackPressed() called";
+            _log(message)
+        }
 
-            val intent = Intent()
-            intent.action = Intent.ACTION_SEND
-            intent.data = Uri.parse("smsto:")
-            intent.putExtra(Intent.EXTRA_TITLE, title.toString())
-            intent.putExtra(Intent.EXTRA_TEXT, txt)
+        @android.webkit.JavascriptInterface
+        fun jsHandler(json: String) {
+            val params = JSONObject(json);
+            val message = params.getString("message");
 
-            Log.d("WEBVIEW", text.toString());
-
-
-            intent.type="text/plain"
-            startActivity(Intent.createChooser(intent,"Share To:"))
+            val appTextView = findViewById<TextView>(R.id.appTextView)
+            appTextView.setText(message)
+            _log(message)
         }
     }
 }
