@@ -5,17 +5,23 @@
 
     <hr/>
 
-    <h4 class="mt-2">From Android</h4>
-    <div id="text"></div>
+    <h4 class="mt-2">From Native App</h4>
+    <div id="fromNativeAppText"></div>
 
     <hr/>
 
-    <h4 class="mt-2">To Android</h4>
+    <h4 class="mt-2">To Native App</h4>
     <div class="input-group mb-3">
         <input type="text" class="form-control" value="init text" id="toAppText" />
         <div class="input-group-append">
             <button class="btn btn-outline-primary" type="button" id="buttonToAppText">Button</button>
         </div>
+    </div>
+
+    <hr/>
+
+    <div mt="">
+        <button type="button" id="btnNativeBack" class="btn btn-primary">&lt; Back (native)</button>
     </div>
 
     <hr/>
@@ -26,13 +32,6 @@
 
 <script>
 (function () {
-    var btnShare;
-
-    document.getElementById('btnClear').addEventListener('click', function (e) {
-        e.preventDefault();
-        document.getElementById('console').innerHTML = '';
-    })
-
     window.debug = function (text) {
         var t = document.createTextNode(text);
         var p = document.createElement('p');
@@ -42,33 +41,27 @@
         document.getElementById('console').prepend(p);
     }
 
+    document.getElementById('btnClear').addEventListener('click', function (e) {
+        e.preventDefault();
+        document.getElementById('console').innerHTML = '';
+    });
+
     document.getElementById('buttonToAppText').addEventListener('click', function (e) {
         var input = document.getElementById('toAppText');
-        var text = input.value
-
-        if (window.JSI && typeof window.JSI.showToast === 'function') {
-            JSI.showToast(text);
-            debug('sent text to Android app');
-        } else if (window.webkit && window.webkit.messageHandlers && typeof window.webkit.messageHandlers.jsHandler) {
-            window.webkit.messageHandlers.jsHandler.postMessage(text);
-            debug('sent text to iOS app');
-        } else {
-            debug('failed to send to app');
-        }
+        var message = input.value;
+        var isDispatchedNative = LAEJS.dispatch('jsHandler', { message: message })
     })
 
-    btnShare = document.getElementById('buttonShare');
-    buttonShare.addEventListener('click', function (e) {
+    document.getElementById('buttonShare').addEventListener('click', function (e) {
         e.preventDefault();
-
-        debug('click: share button');
-        LAEJS.dispatch.shareURL({
-            title : "Sign up for L&E",
+        LAEJS.jsOnShare({
             text: "Your parent has asked you to sign up!",
             url: "https://www.learnandearn.com"
         });
-        debug('after');
     });
 
+    document.getElementById('btnNativeBack').addEventListener('click', function () {
+        LAEJS.jsOnBackPressed();
+    })
 })();
 </script>
