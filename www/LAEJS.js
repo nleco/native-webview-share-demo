@@ -6,8 +6,6 @@
         return obj === Object(obj);
     };
 
-    var debug = debug || console.log;
-
     var _ensureIsObject = function (objOrJSON) {
         var params = null;
 
@@ -56,8 +54,7 @@
         var json = '{}';
         var mergedParams = {};
         var parsedParams = _ensureIsObject(params);
-debug(method);
-debug("------");
+
         if (typeof method !== 'string' || !method) {
             throw "name: is not a string";
         }
@@ -66,10 +63,11 @@ debug("------");
             json = JSON.stringify(params);
         }
 
-        if (_isAndroid && typeof window.JSI[method] === 'function') {
+
+        if (_isAndroid && window.JSI[method]) {
             (window.JSI[method])(json);
             return true;
-        } else if (_isIOS && typeof window.webkitCancelAnimationFrame.messageHandlers[method] === 'function') {
+        } else if (_isIOS && window.webkit.messageHandlers[method]) {
             (window.webkit.messageHandlers[method]).postMessage(json);
             return true;
         }
