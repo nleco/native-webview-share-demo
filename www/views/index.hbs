@@ -50,11 +50,14 @@
     document.getElementById('buttonToAppText').addEventListener('click', function (e) {
         var input = document.getElementById('toAppText');
         var message = input.value;
-        var isDispatchedNative = LAEJS.dispatch('jsHandler', { message: message })
+        debug('btn to app');
+        var isDispatchedNative = LAEJS.dispatch('jsHandler', { message: message });
+        debug('btn to app 2');
     })
 
     document.getElementById('buttonShare').addEventListener('click', function (e) {
         e.preventDefault();
+        debug('jsOnShare');
         LAEJS.jsOnShare({
             text: "Your parent has asked you to sign up!",
             url: "https://www.learnandearn.com"
