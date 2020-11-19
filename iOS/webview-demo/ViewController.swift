@@ -49,7 +49,7 @@ class ViewController: UIViewController, WKScriptMessageHandler, WKUIDelegate, WK
     }
     
     func _log(message: String) {
-        self.webView.evaluateJavaScript("debug('" + message + "')", completionHandler: nil)
+        self.webView.evaluateJavaScript("debug('NATIVELOG: " + message + "')", completionHandler: nil)
         print(message)
     }
 
