@@ -39,7 +39,7 @@ class ViewController: UIViewController, WKScriptMessageHandler, WKUIDelegate, WK
         _log(message: "Buttont tap")
         
         let msg = textField?.text ?? ""
-        let jsCode = "document.getElementById('fromNativeAppText').innerHTML = (+new Date()) + 'from app: " + msg + "'"
+        let jsCode = "document.getElementById('fromNativeAppText').innerHTML = (+new Date()) + ' from app: [" + msg + "]'"
         self.webView.evaluateJavaScript(jsCode, completionHandler: nil)
     }
     
@@ -71,9 +71,6 @@ class ViewController: UIViewController, WKScriptMessageHandler, WKUIDelegate, WK
     
     
     func userContentController(_ userContentController: WKUserContentController, didReceive json: WKScriptMessage) {
-        let _msg = "userContentController: " + json.name
-        _log(message: _msg)
-        
         if json.name == "jsOnShare" {
             self.jsOnShare(json: json)
         } else if json.name == "jsOnBackPressed" {
@@ -86,7 +83,6 @@ class ViewController: UIViewController, WKScriptMessageHandler, WKUIDelegate, WK
     }
     
     func jsOnShare(json: WKScriptMessage) {
-        print("hi");
         struct Share : Decodable {
             let title: String?
             let text: String?
@@ -99,11 +95,11 @@ class ViewController: UIViewController, WKScriptMessageHandler, WKUIDelegate, WK
         
         self.share(title: oShare.title, text: oShare.text, url: oShare.url)
 
-        _log(message: "called jsOnShare()")
+        print("called jsOnShare()")
     }
     
     func jsOnBackPressed(json: WKScriptMessage) {
-        _log(message: "called jsOnBackPressed()")
+        print("called jsOnBackPressed()")
     }
     
     func jsHandler(json: WKScriptMessage) {
@@ -113,7 +109,7 @@ class ViewController: UIViewController, WKScriptMessageHandler, WKUIDelegate, WK
 
         self.textLabel?.text = oLogMessage.message
 
-        _log(message: "called jsHandler()")
+        print("called jsHandler()")
     }
 
     func jsLog(json: WKScriptMessage) {
@@ -121,7 +117,7 @@ class ViewController: UIViewController, WKScriptMessageHandler, WKUIDelegate, WK
         let data = oMessage.data(using: .utf8)!
         let oLogMessage: LogMessage = try! JSONDecoder().decode(LogMessage.self, from: data);
         
-        _log(message: "called jsLog(): " + (oLogMessage.message ?? ""))
+        print("called jsLog(): " + (oLogMessage.message ?? ""))
     }
 }
 
